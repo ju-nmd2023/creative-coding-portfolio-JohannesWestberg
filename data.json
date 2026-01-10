@@ -1,11 +1,11 @@
 [
     {
-    "file": "experiments/am.js",
+    "file": "experiments/am2.js",
     "name": "Arctic Monkeys 'AM' animated",
     "description": "Inspired by Arctic Monkeys 'AM' album, however the lines are animated. I made it as I really like their music and I always imagined that their album cover would be animated, had it not been a still image."
     },
     {
-    "file": "experiments/am2.js",
+    "file": "experiments/am.js",
     "name": "AM variation #2",
     "description": "Thought of the arctic monkeys album but in the context of the mondrain squares, taking the original idea and amplifying it. "
     }
