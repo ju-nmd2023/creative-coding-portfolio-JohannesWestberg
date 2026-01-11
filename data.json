@@ -1,16 +1,16 @@
 [
     {
-        "file": "experiments/mondrain-1js",
+        "file": "experiments/mondrain-1.js",
         "name": "Mondrain Squares",
         "description": "Mondrain squares style grid."
     },
     {
-        "file": "experiments/mondtain2.js",
+        "file": "experiments/mondrain-2.js",
         "name": "Mondrain Squares - 2",
         "description": "Mondrain Squares again, but this time it is made to be generated in different sizes"
     },
     {
-        "file": "experiments/mondrain3.js",
+        "file": "experiments/mondrain-3.js",
         "name": "Mondrain Squares - 3",
         "description": "Played around with rotating the squares and removing the stroke, made it look completely different but still keeping the same style."
     },
