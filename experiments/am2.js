@@ -6,7 +6,7 @@ let yBase;
 let t = 0;
 
 function setup() {
-  createCanvas(400, 400);
+  createCanvas(innerWidth, innerHeight);
   yBase = height / 2;
 
   baseSway = random(20, 120); 
