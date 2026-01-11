@@ -18,7 +18,7 @@ function drawSwayTile(cx, cy, size, layers) {
   const variance = size / 30;
 
  //random size
-  const baseSway = random(size * 0.08, size * 0.35);
+  const baseSway = random(size * 0.08, size * 0.55);
   const wavelength = random(size * 0.4, size * 1.2);
 
   //math
