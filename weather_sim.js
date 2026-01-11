@@ -79,8 +79,6 @@ function rebuildBackground() {
   for (let i = 0; i < 3500; i++) {
     bg.rect(random(width), random(height), 1, 1);
   }
-
-  bg.filter(BLUR, 3);
 }
 
 // colors and such
