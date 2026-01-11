@@ -1,0 +1,32 @@
+[
+    {
+        "file": "experiments/mondrain-1js",
+        "name": "Mondrain Squares",
+        "description": "Mondrain squares style grid."
+    },
+    {
+        "file": "experiments/mondtain2.js",
+        "name": "Mondrain Squares - 2",
+        "description": "Mondrain Squares again, but this time it is made to be generated in different sizes"
+    },
+    {
+        "file": "experiments/mondrain3.js",
+        "name": "Mondrain Squares - 3",
+        "description": "Played around with rotating the squares and removing the stroke, made it look completely different but still keeping the same style."
+    },
+    {
+    "file": "experiments/am2.js",
+    "name": "Arctic Monkeys 'AM' animated",
+    "description": "Inspired by Arctic Monkeys 'AM' album, however the lines are animated. I made it as I really like their music and I always imagined that their album cover would be animated, had it not been a still image."
+    },
+    {
+    "file": "experiments/am.js",
+    "name": "AM variation #2",
+    "description": "Thought of the arctic monkeys album but in the context of the mondrain squares, taking the original idea and amplifying it. "
+    },
+    {
+    "file": "experiments/weather_sim.js",
+    "name": "Rainy Day",
+    "description": "Inspired by 'Rain' by Ilker Danalov, which is an acrylic painting."
+    }
+]
