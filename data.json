@@ -28,5 +28,10 @@
     "file": "experiments/weather_sim.js",
     "name": "Rainy Day",
     "description": "Inspired by 'Rain' by Ilker Danalov, which is an acrylic painting."
+    },
+    {
+    "file": "experiments/weather_sim_sand.js",
+    "name": "Rainy Day",
+    "description": "Inspired by 'Rain' by Ilker Danalov, which is an acrylic painting."
     }
 ]
