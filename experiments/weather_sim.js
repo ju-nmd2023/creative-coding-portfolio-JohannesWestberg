@@ -1,6 +1,6 @@
 let particles = [];
 
-let particleAmount = 2;    
+let particleAmount = 5;    
 let speed = 0;             
 let durationMin = 80;
 let durationMax = 900;
@@ -23,7 +23,7 @@ function setup() {
 }
 
 function rebuildBackground() {
-  bg = createGraphics(width, height);
+  bg = createGraphics(innerWidth, innerHeight);
 
   let topCol = color(210);
   let bottomCol = color(10);
@@ -83,11 +83,11 @@ function draw() {
   image(bg, 0, 0);
   noStroke();
   fill(0, 28);
-  rect(0, 0, width, height);
+  rect(0, 0, innerWidth, innerHeight);
 
   // spawn particles as a sheet
   for (let i = 0; i < particleAmount; i++) {
-    let px = random(0, width);
+    let px = random(0, innerWidth);
     let py = random(bandY, bandY + bandHeight);
     spawnParticle(px, py);
   }
