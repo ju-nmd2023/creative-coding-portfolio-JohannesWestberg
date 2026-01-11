@@ -18,7 +18,7 @@ let gravityStrength = 0.15;
 let bg;
 
 function setup() {
-  createCanvas(500, 500);
+  createCanvas(innerWidth, innerHeight);
   rebuildBackground();
 }
 
