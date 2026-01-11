@@ -5,10 +5,8 @@ let speed = 0;
 let durationMin = 80;
 let durationMax = 900;
 
-
 let bandHeight = 25;        
 let bandY = -25;            
-
 
 let dirX = 0;              
 let dirY = 0.2;              
@@ -17,13 +15,75 @@ let dirY = 0.2;
 let airThickness = 0.9;
 let gravityStrength = 0.15;
 
+let bg;
+
 function setup() {
   createCanvas(500, 500);
+  rebuildBackground();
+}
+
+function rebuildBackground() {
+  bg = createGraphics(width, height);
+
+  let topCol = color(210);
+  let bottomCol = color(10);
+
+  for (let y = 0; y < height; y++) {
+    let t = y / (height - 1);
+    bg.stroke(lerpColor(topCol, bottomCol, t));
+    bg.line(0, y, width, y);
+  }
+
+  bg.noStroke();
+  bg.drawingContext.filter = "blur(18px)";
+  for (let i = 0; i < 24; i++) {
+    bg.fill(random([
+      color(0, 70),
+      color(20, 60),
+      color(40, 45),
+      color(10, 85)
+    ]));
+    let w = random(width * 0.14, width * 0.65);
+    let h = random(height * 0.08, height * 0.36);
+    bg.rect(random(-width * 0.12, width * 0.92), random(height * 0.14, height * 0.94), w, h);
+  }
+  bg.drawingContext.filter = "none";
+
+  bg.drawingContext.filter = "blur(10px)";
+  for (let i = 0; i < 55; i++) {
+    bg.fill(random([
+      color(255, 28),
+      color(235, 26),
+      color(210, 22),
+      color(245, 20)
+    ]));
+    bg.circle(random(width), random(height * 0.22, height * 0.86), random(8, 44));
+  }
+  bg.drawingContext.filter = "none";
+
+  bg.stroke(255, 12);
+  for (let i = 0; i < 260; i++) {
+    bg.strokeWeight(random(1, 3));
+    let x = random(width);
+    let y0 = random(-60, height);
+    let y1 = y0 + random(70, 300);
+    let tilt = random(-10, 10);
+    bg.line(x, y0, x + tilt, y1);
+  }
+
+  bg.noStroke();
+  bg.fill(255, 6);
+  for (let i = 0; i < 3500; i++) {
+    bg.rect(random(width), random(height), 1, 1);
+  }
 }
 
 // colors and such
 function draw() {
-  background(255, 40);
+  image(bg, 0, 0);
+  noStroke();
+  fill(0, 28);
+  rect(0, 0, width, height);
 
   // spawn particles as a sheet
   for (let i = 0; i < particleAmount; i++) {
@@ -50,12 +110,11 @@ function spawnParticle(x, y) {
   let vy = dy * spd;
 
   let duration = int(random(durationMin, durationMax));
-  let individualAirThickness = random(0.985, 0.999);                   // each drop slows differently
-  let individualGravity = random(gravityStrength * 0.6, gravityStrength * 1.4); // each drop accelerates differently
+  let individualAirThickness = random(0.985, 0.999);                   
+  let individualGravity = random(gravityStrength * 0.6, gravityStrength * 1.4); 
 
   particles.push(new Particle(x, y, vx, vy, duration, individualAirThickness, individualGravity));
 }
-
 
 class Particle {
   constructor(x, y, vx, vy, duration, individualAirThickness, individualGravity) {
@@ -76,7 +135,7 @@ class Particle {
     let dx = dirX / mag;
     let dy = dirY / mag;
 
-    // ✅ use each particle's own gravity & drag
+    // Make "rain" be more individual.
     this.vel.x += dx * 0.0;
     this.vel.y += dy * this.gravityStrength;
 
@@ -88,15 +147,17 @@ class Particle {
   }
 
   draw() {
+    let alpha = map(this.duration, 0, this.maxduration, 0, 210);
 
     // draw draw draw
-    stroke(200, alpha);
-    strokeWeight(this.size);
+    stroke(180, alpha * 0.7);
+    strokeWeight(this.size * 0.7);
 
-    // streaking
-    let len = map(this.vel.mag(), speed * 0.8, speed * 0.7, 5, 11, true);
+    // streaking (cannot remove as it breaks it ???)
+    let terminal = this.gravityStrength / max(0.0001, (1 - this.drag));
+    let len = map(this.vel.mag(), 0, terminal, 4, 10, true);
 
-    // draw streak opposite direction of movement
+    // same here
     let v = this.vel.copy();
     if (v.mag() > 0) v.normalize();
 
