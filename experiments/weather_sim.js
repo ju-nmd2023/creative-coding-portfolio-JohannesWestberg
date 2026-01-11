@@ -35,7 +35,7 @@ function rebuildBackground() {
   }
 
   bg.noStroke();
-  bg.drawingContext.filter = "blur(18px)";
+  bg.drawingContext.filter = "blur(58px)";
   for (let i = 0; i < 24; i++) {
     bg.fill(random([
       color(0, 70),
@@ -49,7 +49,7 @@ function rebuildBackground() {
   }
   bg.drawingContext.filter = "none";
 
-  bg.drawingContext.filter = "blur(10px)";
+  bg.drawingContext.filter = "blur(22px)";
   for (let i = 0; i < 55; i++) {
     bg.fill(random([
       color(255, 28),
