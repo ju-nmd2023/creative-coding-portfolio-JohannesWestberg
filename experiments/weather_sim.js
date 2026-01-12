@@ -17,26 +17,17 @@ let gravityStrength = 0.15;
 
 let bg;
 
-function mousePressed() {
-  startSound();
-}
-
-function touchStarted() {
-  startSound();
-  return false;
-}
-
-// Sound of rain
+// Tone.js
 let soundStarted = false;
 let rainSoundSynth, rainSoundFilter, rainSoundGain;
 
-async function startSound() {
+async function startAudio() {
   if (soundStarted) return;
 
-  // Click to trigger
+  // Must be triggered by a user gesture (browser autoplay policy)
   await Tone.start();
 
-  // ChatGPT helped me with getting the right tone here
+  // Cheap “rainSound” plink: sine synth -> bandpass -> gain -> speakers
   rainSoundSynth = new Tone.Synth({
     oscillator: { type: "sine" },
     envelope: { attack: 0.001, decay: 0.10, sustain: 0.0, release: 0.02 },
@@ -55,12 +46,20 @@ async function startSound() {
   soundStarted = true;
 }
 
+function mousePressed() {
+  startAudio();
+}
+
+function touchStarted() {
+  startAudio();
+  return false;
+}
+
 function setup() {
   createCanvas(innerWidth, innerHeight);
   dirX = random(-0.25, 0.25);
   dirY = 0.2;
   rebuildBackground();
-  document.body.addEventListener("pointerdown", startSound, { once: true });
 }
 
 // bg = background
@@ -143,23 +142,23 @@ function draw() {
     if (particles[i].durationEnd) particles.splice(i, 1);
   }
 
-  // Audio tweaker
+  // Audio Tweaker
   if (!soundStarted) {
-    
+
   } else if (frameCount % 4 === 0) {
-    // Tie rain to particles
+    // Tie sound to particles
     const density = constrain(particleAmount / 15, 0, 1);
 
-    // tweaker
-    const rainSoundProb = 0.03 + density * 0.15;
+    // tweaker 
+    const rainSoundProb = 0.03 + density * 0.10;
 
     if (random() < rainSoundProb) {
-      const freq = random(150, 1100);
+      const freq = random(450, 1200);
 
-      // rain sound variation
-      rainSoundFilter.frequency.rampTo(random(200, 1700), 0.02);
+      //Individual rain sound
+      rainSoundFilter.frequency.rampTo(random(700, 1600), 0.02);
 
-      // Quiet/loud
+      // Loudness
       const vel = random(0.05, 0.12 + density * 0.12);
 
       rainSoundSynth.triggerAttackRelease(freq, 0.03, Tone.now(), vel);
