@@ -1,15 +1,15 @@
 let particles = [];
 
-let particleAmount = 5;    
-let speed = 0;             
+let particleAmount = 5;
+let speed = 0;
 let durationMin = 80;
 let durationMax = 900;
 
-let bandHeight = 25;        
-let bandY = -25;            
+let bandHeight = 25;
+let bandY = -25;
 
-let dirX = 0;              
-let dirY = 0.2;              
+let dirX = 0;
+let dirY = 0.2;
 
 // gravity and air "thickness"
 let airThickness = 0.9;
@@ -21,32 +21,29 @@ let bg;
 let audioStarted = false;
 let windNoise, windFilter, windGain;
 
-// audio
 async function startAudio() {
-    if (audioStarted) return;
-  
-    // Must be triggered by a user gesture (browser autoplay policy)
-    await Tone.start();
-  
-    // Very cheap "wind/rain" bed: noise -> lowpass filter -> gain -> speakers
-    windNoise = new Tone.Noise("pink");
-    windFilter = new Tone.Filter({ type: "lowpass", frequency: 600, Q: 0.7 });
-    windGain = new Tone.Gain(0).toDestination();
-  
-    windNoise.chain(windFilter, windGain);
-    windNoise.start();
-  
-    audioStarted = true;
-  }
-  
-  function mousePressed() {
-    startAudio();
-  }
-  
-  function touchStarted() {
-    startAudio();
-    return false;
-  }  
+  if (audioStarted) return;
+
+  await Tone.start();
+
+  windNoise = new Tone.Noise("pink");
+  windFilter = new Tone.Filter({ type: "lowpass", frequency: 600, Q: 0.7 });
+  windGain = new Tone.Gain(0).toDestination();
+
+  windNoise.chain(windFilter, windGain);
+  windNoise.start();
+
+  audioStarted = true;
+}
+
+function mousePressed() {
+  startAudio();
+}
+
+function touchStarted() {
+  startAudio();
+  return false;
+}
 
 function setup() {
   createCanvas(innerWidth, innerHeight);
@@ -71,26 +68,23 @@ function rebuildBackground() {
   bg.noStroke();
   bg.drawingContext.filter = "blur(18px)";
   for (let i = 0; i < 24; i++) {
-    bg.fill(random([
-      color(0, 70),
-      color(20, 60),
-      color(40, 45),
-      color(10, 85)
-    ]));
+    bg.fill(
+      random([color(0, 70), color(20, 60), color(40, 45), color(10, 85)])
+    );
     let w = random(width * 0.14, width * 0.65);
     let h = random(height * 0.08, height * 0.36);
-    bg.rect(random(-width * 0.12, width * 0.92), random(height * 0.14, height * 0.94), w, h);
+    bg.rect(
+      random(-width * 0.12, width * 0.92),
+      random(height * 0.14, height * 0.94),
+      w,
+      h
+    );
   }
   bg.drawingContext.filter = "none";
 
   bg.drawingContext.filter = "blur(10px)";
   for (let i = 0; i < 55; i++) {
-    bg.fill(random([
-      color(255, 28),
-      color(235, 26),
-      color(210, 22),
-      color(245, 20)
-    ]));
+    bg.fill(random([color(255, 28), color(235, 26), color(210, 22), color(245, 20)]));
     bg.circle(random(width), random(height * 0.22, height * 0.55), random(8, 44));
   }
   bg.drawingContext.filter = "none";
@@ -112,7 +106,6 @@ function rebuildBackground() {
   }
 }
 
-// colors and such
 function draw() {
   image(bg, 0, 0);
   noStroke();
@@ -126,15 +119,37 @@ function draw() {
     spawnParticle(px, py);
   }
 
-  // chatGpt helped me debug here
   for (let i = particles.length - 1; i >= 0; i--) {
     particles[i].update();
     particles[i].draw();
     if (particles[i].durationEnd) particles.splice(i, 1);
   }
+
+  // ===== audio update belongs HERE (once per frame) =====
+  if (!audioStarted) {
+    noStroke();
+    fill(0, 120);
+    rect(18, 18, 260, 44, 8);
+    fill(255);
+    textSize(14);
+    text("Click / tap to enable sound", 30, 46);
+  } else if (frameCount % 4 === 0) {
+    const dirMag = Math.hypot(dirX, dirY);
+    const pAmt = constrain(particleAmount / 20, 0, 1);
+    const gAmt = constrain(gravityStrength / 0.4, 0, 1);
+
+    const targetGain = constrain(
+      0.03 + dirMag * 0.25 + pAmt * 0.25 + gAmt * 0.15,
+      0,
+      0.7
+    );
+    windGain.gain.rampTo(targetGain, 0.12);
+
+    const targetFreq = constrain(250 + dirMag * 2200 + pAmt * 1800, 200, 6000);
+    windFilter.frequency.rampTo(targetFreq, 0.12);
+  }
 }
 
-//chat gpt helped me debug this section
 function spawnParticle(x, y) {
   let mag = Math.hypot(dirX, dirY) || 1;
   let dx = dirX / mag;
@@ -144,13 +159,12 @@ function spawnParticle(x, y) {
   let vy = dy * spd;
 
   let duration = int(random(durationMin, durationMax));
-  let individualAirThickness = random(0.985, 0.999);                   
-  let individualGravity = random(gravityStrength * 0.6, gravityStrength * 1.4); 
+  let individualAirThickness = random(0.985, 0.999);
+  let individualGravity = random(gravityStrength * 0.6, gravityStrength * 1.4);
 
   particles.push(new Particle(x, y, vx, vy, duration, individualAirThickness, individualGravity));
 }
 
-//bunch of math
 class Particle {
   constructor(x, y, vx, vy, duration, individualAirThickness, individualGravity) {
     this.pos = createVector(x, y);
@@ -173,7 +187,6 @@ class Particle {
     let dx = dirX / mag;
     let dy = dirY / mag;
 
-    // Make "rain" be more individual.
     this.vel.x += dx * this.gravityStrength * 0.35;
     this.vel.y += dy * this.gravityStrength;
 
@@ -181,17 +194,15 @@ class Particle {
     this.pos.add(this.vel);
 
     this.duration--;
-    this.durationEnd = (this.duration <= 0);
+    this.durationEnd = this.duration <= 0;
   }
 
   draw() {
     let alpha = map(this.duration, 0, this.maxduration, 0, 210);
 
-    // draw draw draw
     noStroke();
     strokeWeight(this.size * 0.1);
     fill(180, alpha * 0.6);
-  
 
     let angle = atan2(this.vel.y, this.vel.x);
     let len = this.length;
@@ -203,30 +214,5 @@ class Particle {
     rectMode(CENTER);
     rect(0, 0, len, w);
     pop();
-
-      // ===== update audio (throttled) =====
-  if (!audioStarted) {
-    // optional on-screen hint
-    noStroke();
-    fill(0, 120);
-    rect(18, 18, 260, 44, 8);
-    fill(255);
-    textSize(14);
-    text("Click / tap to enable sound", 30, 46);
-  } else if (frameCount % 4 === 0) {
-    // React to your simulation parameters
-    const dirMag = Math.hypot(dirX, dirY);               // “wind” intensity
-    const pAmt = constrain(particleAmount / 20, 0, 1);   // normalize
-    const gAmt = constrain(gravityStrength / 0.4, 0, 1); // normalize
-
-    // Volume: more particles + stronger direction + gravity -> louder
-    const targetGain = constrain(0.03 + dirMag * 0.25 + pAmt * 0.25 + gAmt * 0.15, 0, 0.7);
-    windGain.gain.rampTo(targetGain, 0.12);
-
-    // Brightness: stronger direction + more particles -> higher filter cutoff
-    const targetFreq = constrain(250 + dirMag * 2200 + pAmt * 1800, 200, 6000);
-    windFilter.frequency.rampTo(targetFreq, 0.12);
-  }
-
   }
 }
