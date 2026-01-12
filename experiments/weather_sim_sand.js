@@ -1,13 +1,13 @@
 let particles = [];
 
-let particleAmount = 19;
+let particleAmount = 8;
 let speed = 0;
-let durationMin = 235;
-let durationMax = 510;
+let durationMin = 80;
+let durationMax = 600;
 
 // band which spawns particles is now flipped
 let bandWidth = 25;    
-let bandX = -8;       
+let bandX = -45;       
 
 // Drags particles across scren
 let dirX = 0.2;
@@ -18,6 +18,49 @@ let airThickness = 1.4;
 let gravityStrength = 0.1;
 
 let bg;
+
+// ===== Tone.js audio globals =====
+let audioStarted = false;
+let windNoise, windFilter, windGain, windReverb;
+let grit; // optional percussive "sand" ticks
+
+//sound also
+async function startAudio() {
+  if (audioStarted) return;
+
+  // Must be called from a user gesture (click/tap), or audio will be blocked
+  await Tone.start(); // :contentReference[oaicite:4]{index=4}
+
+  // Wind bed: pink noise -> lowpass filter -> reverb -> gain -> speakers
+  windNoise = new Tone.Noise("pink");
+  windFilter = new Tone.Filter({ type: "lowpass", frequency: 600, Q: 0.8 });
+  windReverb = new Tone.Reverb({ decay: 3, wet: 0.18 });
+  windGain = new Tone.Gain(0).toDestination();
+
+  windNoise.chain(windFilter, windReverb, windGain);
+  windNoise.start();
+
+  // Optional: little “sand grit” ticks (very subtle)
+  grit = new Tone.MetalSynth({
+    frequency: 240,
+    envelope: { attack: 0.001, decay: 0.06, release: 0.01 },
+    harmonicity: 7.5,
+    modulationIndex: 25,
+    resonance: 3500,
+    octaves: 1.2,
+  }).connect(new Tone.Gain(0.03).toDestination());
+
+  audioStarted = true;
+}
+
+function mousePressed() {
+  startAudio();
+}
+
+function touchStarted() {
+  startAudio();
+  return false;
+}
 
 function setup() {
   createCanvas(innerWidth, innerHeight);
@@ -196,6 +239,34 @@ class Particle {
     noStroke();
     fill(red(this.baseCol), green(this.baseCol), blue(this.baseCol), alpha);
   
-    circle(this.pos.x, this.pos.y, this.size * 5.5);
+    circle(this.pos.x, this.pos.y, this.size * 5);
+
+      // ===== update audio from visuals =====
+  if (audioStarted) {
+    const windMag = Math.hypot(dirX, dirY);       // current wind direction strength
+    const density = particles.length / 300;       // rough “how sandy is it”
+
+    // Gain: more wind + more particles = louder
+    const targetGain = constrain(windMag * 0.9 + density * 0.6, 0, 0.8);
+    windGain.gain.rampTo(targetGain, 0.08);
+
+    // Filter: more wind = brighter hiss
+    const targetFreq = 200 + windMag * 2400 + density * 900;
+    windFilter.frequency.rampTo(targetFreq, 0.08);
+
+    // Occasional grit ticks (don’t do it every frame)
+    if (random() < constrain(density * 0.03, 0, 0.08)) {
+      grit.triggerAttackRelease("16n");
+    }
+  } else {
+    // Helpful prompt before sound is enabled
+    noStroke();
+    fill(0, 120);
+    rect(18, 18, 260, 44, 8);
+    fill(255);
+    textSize(14);
+    text("Click / tap to enable sound", 30, 46);
+  }
+
 }
 }
