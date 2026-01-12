@@ -17,21 +17,31 @@ let gravityStrength = 0.15;
 
 let bg;
 
-// ===== Tone.js audio =====
+// ===== Tone.js audio (DRIPS ONLY) =====
 let audioStarted = false;
-let windNoise, windFilter, windGain;
+let dripSynth, dripFilter, dripGain;
 
 async function startAudio() {
   if (audioStarted) return;
 
+  // Must be triggered by a user gesture (browser autoplay policy)
   await Tone.start();
 
-  windNoise = new Tone.Noise("pink");
-  windFilter = new Tone.Filter({ type: "lowpass", frequency: 600, Q: 0.7 });
-  windGain = new Tone.Gain(0).toDestination();
+  // Cheap “drip” plink: sine synth -> bandpass -> gain -> speakers
+  dripSynth = new Tone.Synth({
+    oscillator: { type: "sine" },
+    envelope: { attack: 0.001, decay: 0.10, sustain: 0.0, release: 0.02 },
+  });
 
-  windNoise.chain(windFilter, windGain);
-  windNoise.start();
+  dripFilter = new Tone.Filter({
+    type: "bandpass",
+    frequency: 900,
+    Q: 8,
+  });
+
+  dripGain = new Tone.Gain(0.12).toDestination();
+
+  dripSynth.chain(dripFilter, dripGain);
 
   audioStarted = true;
 }
@@ -52,7 +62,7 @@ function setup() {
   rebuildBackground();
 }
 
-//bg = background
+// bg = background
 function rebuildBackground() {
   bg = createGraphics(innerWidth, innerHeight);
 
@@ -84,8 +94,14 @@ function rebuildBackground() {
 
   bg.drawingContext.filter = "blur(10px)";
   for (let i = 0; i < 55; i++) {
-    bg.fill(random([color(255, 28), color(235, 26), color(210, 22), color(245, 20)]));
-    bg.circle(random(width), random(height * 0.22, height * 0.55), random(8, 44));
+    bg.fill(
+      random([color(255, 28), color(235, 26), color(210, 22), color(245, 20)])
+    );
+    bg.circle(
+      random(width),
+      random(height * 0.22, height * 0.55),
+      random(8, 44)
+    );
   }
   bg.drawingContext.filter = "none";
 
@@ -106,6 +122,7 @@ function rebuildBackground() {
   }
 }
 
+// colors and such
 function draw() {
   image(bg, 0, 0);
   noStroke();
@@ -125,31 +142,37 @@ function draw() {
     if (particles[i].durationEnd) particles.splice(i, 1);
   }
 
-  // ===== audio update belongs HERE (once per frame) =====
+  // ===== DRIP AUDIO UPDATE (throttled) =====
   if (!audioStarted) {
+    // on-screen hint
     noStroke();
     fill(0, 120);
     rect(18, 18, 260, 44, 8);
     fill(255);
     textSize(14);
-    text("Click / tap to enable sound", 30, 46);
+    text("Click / tap to enable drips", 30, 46);
   } else if (frameCount % 4 === 0) {
-    const dirMag = Math.hypot(dirX, dirY);
-    const pAmt = constrain(particleAmount / 20, 0, 1);
-    const gAmt = constrain(gravityStrength / 0.4, 0, 1);
+    // More particles => more drips (updates ~15x/sec)
+    const density = constrain(particleAmount / 15, 0, 1);
 
-    const targetGain = constrain(
-      0.03 + dirMag * 0.25 + pAmt * 0.25 + gAmt * 0.15,
-      0,
-      0.7
-    );
-    windGain.gain.rampTo(targetGain, 0.12);
+    // tweak these to taste
+    const dripProb = 0.03 + density * 0.10;
 
-    const targetFreq = constrain(250 + dirMag * 2200 + pAmt * 1800, 200, 6000);
-    windFilter.frequency.rampTo(targetFreq, 0.12);
+    if (random() < dripProb) {
+      const freq = random(450, 1200);
+
+      // Make each drip slightly different
+      dripFilter.frequency.rampTo(random(700, 1600), 0.02);
+
+      // Quiet-to-louder range depending on density
+      const vel = random(0.05, 0.12 + density * 0.12);
+
+      dripSynth.triggerAttackRelease(freq, 0.03, Tone.now(), vel);
+    }
   }
 }
 
+// chat gpt helped me debug this section
 function spawnParticle(x, y) {
   let mag = Math.hypot(dirX, dirY) || 1;
   let dx = dirX / mag;
@@ -162,9 +185,20 @@ function spawnParticle(x, y) {
   let individualAirThickness = random(0.985, 0.999);
   let individualGravity = random(gravityStrength * 0.6, gravityStrength * 1.4);
 
-  particles.push(new Particle(x, y, vx, vy, duration, individualAirThickness, individualGravity));
+  particles.push(
+    new Particle(
+      x,
+      y,
+      vx,
+      vy,
+      duration,
+      individualAirThickness,
+      individualGravity
+    )
+  );
 }
 
+// bunch of math
 class Particle {
   constructor(x, y, vx, vy, duration, individualAirThickness, individualGravity) {
     this.pos = createVector(x, y);
@@ -187,6 +221,7 @@ class Particle {
     let dx = dirX / mag;
     let dy = dirY / mag;
 
+    // Make "rain" be more individual.
     this.vel.x += dx * this.gravityStrength * 0.35;
     this.vel.y += dy * this.gravityStrength;
 
