@@ -1,9 +1,9 @@
 let particles = [];
 
-let particleAmount = 22;
+let particleAmount = 20;
 let speed = 0;
-let durationMin = 300;
-let durationMax = 600;
+let durationMin = 235;
+let durationMax = 550;
 
 // band which spawns particles is now flipped
 let bandWidth = 25;    
@@ -196,6 +196,6 @@ class Particle {
     noStroke();
     fill(red(this.baseCol), green(this.baseCol), blue(this.baseCol), alpha);
   
-    circle(this.pos.x, this.pos.y, this.size * 5);
+    circle(this.pos.x, this.pos.y, this.size * 5.5);
 }
 }
