@@ -17,6 +17,15 @@ let gravityStrength = 0.15;
 
 let bg;
 
+function mousePressed() {
+  startSound();
+}
+
+function touchStarted() {
+  startSound();
+  return false;
+}
+
 // Sound of rain
 let soundStarted = false;
 let rainSoundSynth, rainSoundFilter, rainSoundGain;
@@ -24,10 +33,10 @@ let rainSoundSynth, rainSoundFilter, rainSoundGain;
 async function startSound() {
   if (soundStarted) return;
 
-  // Must be triggered by a user gesture (browser autoplay policy)
+  // Click to trigger
   await Tone.start();
 
-  // Cheap “rainSound” plink: sine synth -> bandpass -> gain -> speakers
+  // ChatGPT helped me with getting the right tone here
   rainSoundSynth = new Tone.Synth({
     oscillator: { type: "sine" },
     envelope: { attack: 0.001, decay: 0.10, sustain: 0.0, release: 0.02 },
@@ -44,15 +53,6 @@ async function startSound() {
   rainSoundSynth.chain(rainSoundFilter, rainSoundGain);
 
   soundStarted = true;
-}
-
-function mousePressed() {
-  startSound();
-}
-
-function touchStarted() {
-  startSound();
-  return false;
 }
 
 function setup() {
@@ -149,16 +149,16 @@ function draw() {
     // Tie rain to particles
     const density = constrain(particleAmount / 15, 0, 1);
 
-    // tweak these to taste
+    // tweaker
     const rainSoundProb = 0.03 + density * 0.15;
 
     if (random() < rainSoundProb) {
       const freq = random(150, 1100);
 
-      // Make each rainSound slightly different
+      // rain sound variation
       rainSoundFilter.frequency.rampTo(random(200, 1700), 0.02);
 
-      // Quiet-to-louder range depending on density
+      // Quiet/loud
       const vel = random(0.05, 0.12 + density * 0.12);
 
       rainSoundSynth.triggerAttackRelease(freq, 0.03, Tone.now(), vel);
