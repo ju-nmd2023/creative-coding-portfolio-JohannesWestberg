@@ -7,7 +7,7 @@ let durationMax = 600;
 
 // band which spawns particles is now flipped
 let bandWidth = 25;    
-let bandX = -45;       
+let bandX = -8;       
 
 // Drags particles across scren
 let dirX = 0.2;
