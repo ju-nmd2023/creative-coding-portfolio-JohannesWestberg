@@ -60,6 +60,7 @@ function setup() {
   dirX = random(-0.25, 0.25);
   dirY = 0.2;
   rebuildBackground();
+  document.body.addEventListener("pointerdown", startSound, { once: true });
 }
 
 // bg = background
