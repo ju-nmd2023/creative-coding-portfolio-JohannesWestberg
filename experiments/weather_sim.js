@@ -17,11 +17,45 @@ let gravityStrength = 0.15;
 
 let bg;
 
+// ===== Tone.js audio =====
+let audioStarted = false;
+let windNoise, windFilter, windGain;
+
+// audio
+async function startAudio() {
+    if (audioStarted) return;
+  
+    // Must be triggered by a user gesture (browser autoplay policy)
+    await Tone.start();
+  
+    // Very cheap "wind/rain" bed: noise -> lowpass filter -> gain -> speakers
+    windNoise = new Tone.Noise("pink");
+    windFilter = new Tone.Filter({ type: "lowpass", frequency: 600, Q: 0.7 });
+    windGain = new Tone.Gain(0).toDestination();
+  
+    windNoise.chain(windFilter, windGain);
+    windNoise.start();
+  
+    audioStarted = true;
+  }
+  
+  function mousePressed() {
+    startAudio();
+  }
+  
+  function touchStarted() {
+    startAudio();
+    return false;
+  }  
+
 function setup() {
   createCanvas(innerWidth, innerHeight);
+  dirX = random(-0.25, 0.25);
+  dirY = 0.2;
   rebuildBackground();
 }
 
+//bg = background
 function rebuildBackground() {
   bg = createGraphics(innerWidth, innerHeight);
 
@@ -35,7 +69,7 @@ function rebuildBackground() {
   }
 
   bg.noStroke();
-  bg.drawingContext.filter = "blur(58px)";
+  bg.drawingContext.filter = "blur(18px)";
   for (let i = 0; i < 24; i++) {
     bg.fill(random([
       color(0, 70),
@@ -49,7 +83,7 @@ function rebuildBackground() {
   }
   bg.drawingContext.filter = "none";
 
-  bg.drawingContext.filter = "blur(22px)";
+  bg.drawingContext.filter = "blur(10px)";
   for (let i = 0; i < 55; i++) {
     bg.fill(random([
       color(255, 28),
@@ -57,7 +91,7 @@ function rebuildBackground() {
       color(210, 22),
       color(245, 20)
     ]));
-    bg.circle(random(width), random(height * 0.22, height * 0.86), random(8, 44));
+    bg.circle(random(width), random(height * 0.22, height * 0.55), random(8, 44));
   }
   bg.drawingContext.filter = "none";
 
@@ -116,6 +150,7 @@ function spawnParticle(x, y) {
   particles.push(new Particle(x, y, vx, vy, duration, individualAirThickness, individualGravity));
 }
 
+//bunch of math
 class Particle {
   constructor(x, y, vx, vy, duration, individualAirThickness, individualGravity) {
     this.pos = createVector(x, y);
@@ -124,10 +159,13 @@ class Particle {
     this.duration = duration;
     this.maxduration = duration;
 
-    this.size = random(1, 3);
+    this.size = random(0.2, 1);
 
     this.drag = individualAirThickness;
     this.gravityStrength = individualGravity;
+
+    this.width = random(1.5, 3.5);
+    this.length = random(8, 18);
   }
 
   update() {
@@ -136,7 +174,7 @@ class Particle {
     let dy = dirY / mag;
 
     // Make "rain" be more individual.
-    this.vel.x += dx * 0.0;
+    this.vel.x += dx * this.gravityStrength * 0.35;
     this.vel.y += dy * this.gravityStrength;
 
     this.vel.mult(this.drag);
@@ -150,22 +188,45 @@ class Particle {
     let alpha = map(this.duration, 0, this.maxduration, 0, 210);
 
     // draw draw draw
-    stroke(180, alpha * 0.7);
-    strokeWeight(this.size * 0.7);
+    noStroke();
+    strokeWeight(this.size * 0.1);
+    fill(180, alpha * 0.6);
+  
 
-    // streaking (cannot remove as it breaks it ???)
-    let terminal = this.gravityStrength / max(0.0001, (1 - this.drag));
-    let len = map(this.vel.mag(), 0, terminal, 4, 10, true);
+    let angle = atan2(this.vel.y, this.vel.x);
+    let len = this.length;
+    let w = this.width;
 
-    // same here
-    let v = this.vel.copy();
-    if (v.mag() > 0) v.normalize();
+    push();
+    translate(this.pos.x, this.pos.y);
+    rotate(angle);
+    rectMode(CENTER);
+    rect(0, 0, len, w);
+    pop();
 
-    line(
-      this.pos.x,
-      this.pos.y,
-      this.pos.x - v.x * len,
-      this.pos.y - v.y * len
-    );
+      // ===== update audio (throttled) =====
+  if (!audioStarted) {
+    // optional on-screen hint
+    noStroke();
+    fill(0, 120);
+    rect(18, 18, 260, 44, 8);
+    fill(255);
+    textSize(14);
+    text("Click / tap to enable sound", 30, 46);
+  } else if (frameCount % 4 === 0) {
+    // React to your simulation parameters
+    const dirMag = Math.hypot(dirX, dirY);               // “wind” intensity
+    const pAmt = constrain(particleAmount / 20, 0, 1);   // normalize
+    const gAmt = constrain(gravityStrength / 0.4, 0, 1); // normalize
+
+    // Volume: more particles + stronger direction + gravity -> louder
+    const targetGain = constrain(0.03 + dirMag * 0.25 + pAmt * 0.25 + gAmt * 0.15, 0, 0.7);
+    windGain.gain.rampTo(targetGain, 0.12);
+
+    // Brightness: stronger direction + more particles -> higher filter cutoff
+    const targetFreq = constrain(250 + dirMag * 2200 + pAmt * 1800, 200, 6000);
+    windFilter.frequency.rampTo(targetFreq, 0.12);
+  }
+
   }
 }
