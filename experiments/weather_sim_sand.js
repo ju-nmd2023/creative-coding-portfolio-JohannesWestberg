@@ -1,9 +1,9 @@
 let particles = [];
 
-let particleAmount = 20;
+let particleAmount = 19;
 let speed = 0;
 let durationMin = 235;
-let durationMax = 550;
+let durationMax = 510;
 
 // band which spawns particles is now flipped
 let bandWidth = 25;    
