@@ -3,7 +3,7 @@ let particles = [];
 let particleAmount = 8;
 let speed = 0;
 let durationMin = 80;
-let durationMax = 900;
+let durationMax = 600;
 
 // band which spawns particles is now flipped
 let bandWidth = 25;    
@@ -179,7 +179,7 @@ class Particle {
     let dx = dirX / mag;
     let dy = dirY / mag;
 
-    // push dust to the right.
+    // blow particles right, or push them
     this.vel.x += dx * this.gravityStrength;
     this.vel.y += dy * this.gravityStrength * 0.35;
 
@@ -191,21 +191,11 @@ class Particle {
   }
 
   draw() {
-    let alpha = map(this.duration, 0, this.maxduration, 0, 210);
-    alpha *= this.alphaBoost;
-
+    let alpha = map(this.duration, 0, this.maxduration, 0, 210) * this.alphaBoost;
+  
     noStroke();
     fill(red(this.baseCol), green(this.baseCol), blue(this.baseCol), alpha);
-
-    let angle = atan2(this.vel.y, this.vel.x);
-    let len = this.length;
-    let w = this.width;
-
-    push();
-    translate(this.pos.x, this.pos.y);
-    rotate(angle);
-    rectMode(CENTER);
-    rect(0, 0, len, w);
-    pop();
-  }
+  
+    circle(this.pos.x, this.pos.y, this.size * 5);
+}
 }
