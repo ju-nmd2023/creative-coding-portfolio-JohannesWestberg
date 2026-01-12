@@ -17,41 +17,41 @@ let gravityStrength = 0.15;
 
 let bg;
 
-// ===== Tone.js audio (DRIPS ONLY) =====
-let audioStarted = false;
-let dripSynth, dripFilter, dripGain;
+// Sound of rain
+let soundStarted = false;
+let rainSoundSynth, rainSoundFilter, rainSoundGain;
 
-async function startAudio() {
-  if (audioStarted) return;
+async function startSound() {
+  if (soundStarted) return;
 
   // Must be triggered by a user gesture (browser autoplay policy)
   await Tone.start();
 
-  // Cheap “drip” plink: sine synth -> bandpass -> gain -> speakers
-  dripSynth = new Tone.Synth({
+  // Cheap “rainSound” plink: sine synth -> bandpass -> gain -> speakers
+  rainSoundSynth = new Tone.Synth({
     oscillator: { type: "sine" },
     envelope: { attack: 0.001, decay: 0.10, sustain: 0.0, release: 0.02 },
   });
 
-  dripFilter = new Tone.Filter({
+  rainSoundFilter = new Tone.Filter({
     type: "bandpass",
     frequency: 900,
     Q: 8,
   });
 
-  dripGain = new Tone.Gain(0.12).toDestination();
+  rainSoundGain = new Tone.Gain(0.12).toDestination();
 
-  dripSynth.chain(dripFilter, dripGain);
+  rainSoundSynth.chain(rainSoundFilter, rainSoundGain);
 
-  audioStarted = true;
+  soundStarted = true;
 }
 
 function mousePressed() {
-  startAudio();
+  startSound();
 }
 
 function touchStarted() {
-  startAudio();
+  startSound();
   return false;
 }
 
@@ -142,32 +142,26 @@ function draw() {
     if (particles[i].durationEnd) particles.splice(i, 1);
   }
 
-  // ===== DRIP AUDIO UPDATE (throttled) =====
-  if (!audioStarted) {
-    // on-screen hint
-    noStroke();
-    fill(0, 120);
-    rect(18, 18, 260, 44, 8);
-    fill(255);
-    textSize(14);
-    text("Click / tap to enable drips", 30, 46);
+  // Audio tweaker
+  if (!soundStarted) {
+    
   } else if (frameCount % 4 === 0) {
-    // More particles => more drips (updates ~15x/sec)
+    // Tie rain to particles
     const density = constrain(particleAmount / 15, 0, 1);
 
     // tweak these to taste
-    const dripProb = 0.03 + density * 0.10;
+    const rainSoundProb = 0.03 + density * 0.15;
 
-    if (random() < dripProb) {
-      const freq = random(450, 1200);
+    if (random() < rainSoundProb) {
+      const freq = random(150, 1100);
 
-      // Make each drip slightly different
-      dripFilter.frequency.rampTo(random(700, 1600), 0.02);
+      // Make each rainSound slightly different
+      rainSoundFilter.frequency.rampTo(random(200, 1700), 0.02);
 
       // Quiet-to-louder range depending on density
       const vel = random(0.05, 0.12 + density * 0.12);
 
-      dripSynth.triggerAttackRelease(freq, 0.03, Tone.now(), vel);
+      rainSoundSynth.triggerAttackRelease(freq, 0.03, Tone.now(), vel);
     }
   }
 }
