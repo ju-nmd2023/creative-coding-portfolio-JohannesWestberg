@@ -22,7 +22,6 @@ let bg;
 // ===== Tone.js audio globals =====
 let audioStarted = false;
 let windNoise, windFilter, windGain, windReverb;
-let grit; // optional percussive "sand" ticks
 
 //sound also
 async function startAudio() {

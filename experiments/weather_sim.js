@@ -1,15 +1,15 @@
 let particles = [];
 
-let particleAmount = 5;
-let speed = 0;
+let particleAmount = 5;    
+let speed = 0;             
 let durationMin = 80;
 let durationMax = 900;
 
-let bandHeight = 25;
-let bandY = -25;
+let bandHeight = 25;        
+let bandY = -25;            
 
-let dirX = 0;
-let dirY = 0.2;
+let dirX = 0;              
+let dirY = 0.2;              
 
 // gravity and air "thickness"
 let airThickness = 0.9;
@@ -17,33 +17,37 @@ let gravityStrength = 0.15;
 
 let bg;
 
-// Tone.js
-let soundStarted = false;
-let rainSoundSynth, rainSoundFilter, rainSoundGain;
+// ===== Tone.js audio globals =====
+let audioStarted = false;
+let windNoise, windFilter, windGain, windReverb;
 
+//sound also
 async function startAudio() {
-  if (soundStarted) return;
+  if (audioStarted) return;
 
-  // Must be triggered by a user gesture (browser autoplay policy)
-  await Tone.start();
+  // Must be called from a user gesture (click/tap), or audio will be blocked
+  await Tone.start(); // :contentReference[oaicite:4]{index=4}
 
-  // Cheap “rainSound” plink: sine synth -> bandpass -> gain -> speakers
-  rainSoundSynth = new Tone.Synth({
-    oscillator: { type: "sine" },
-    envelope: { attack: 0.001, decay: 0.10, sustain: 0.0, release: 0.02 },
-  });
+  // Wind bed: pink noise -> lowpass filter -> reverb -> gain -> speakers
+  windNoise = new Tone.Noise("pink");
+  windFilter = new Tone.Filter({ type: "lowpass", frequency: 600, Q: 0.8 });
+  windReverb = new Tone.Reverb({ decay: 3, wet: 0.18 });
+  windGain = new Tone.Gain(0).toDestination();
 
-  rainSoundFilter = new Tone.Filter({
-    type: "bandpass",
-    frequency: 900,
-    Q: 8,
-  });
+  windNoise.chain(windFilter, windReverb, windGain);
+  windNoise.start();
 
-  rainSoundGain = new Tone.Gain(0.12).toDestination();
+  // Optional: little “sand grit” ticks (very subtle)
+  grit = new Tone.MetalSynth({
+    frequency: 240,
+    envelope: { attack: 0.001, decay: 0.06, release: 0.01 },
+    harmonicity: 7.5,
+    modulationIndex: 25,
+    resonance: 3500,
+    octaves: 1.2,
+  }).connect(new Tone.Gain(0.03).toDestination());
 
-  rainSoundSynth.chain(rainSoundFilter, rainSoundGain);
-
-  soundStarted = true;
+  audioStarted = true;
 }
 
 function mousePressed() {
@@ -55,14 +59,7 @@ function touchStarted() {
   return false;
 }
 
-function setup() {
-  createCanvas(innerWidth, innerHeight);
-  dirX = random(-0.25, 0.25);
-  dirY = 0.2;
-  rebuildBackground();
-}
-
-// bg = background
+//bg = background
 function rebuildBackground() {
   bg = createGraphics(innerWidth, innerHeight);
 
@@ -78,30 +75,27 @@ function rebuildBackground() {
   bg.noStroke();
   bg.drawingContext.filter = "blur(18px)";
   for (let i = 0; i < 24; i++) {
-    bg.fill(
-      random([color(0, 70), color(20, 60), color(40, 45), color(10, 85)])
-    );
+    bg.fill(random([
+      color(0, 70),
+      color(20, 60),
+      color(40, 45),
+      color(10, 85)
+    ]));
     let w = random(width * 0.14, width * 0.65);
     let h = random(height * 0.08, height * 0.36);
-    bg.rect(
-      random(-width * 0.12, width * 0.92),
-      random(height * 0.14, height * 0.94),
-      w,
-      h
-    );
+    bg.rect(random(-width * 0.12, width * 0.92), random(height * 0.14, height * 0.94), w, h);
   }
   bg.drawingContext.filter = "none";
 
   bg.drawingContext.filter = "blur(10px)";
   for (let i = 0; i < 55; i++) {
-    bg.fill(
-      random([color(255, 28), color(235, 26), color(210, 22), color(245, 20)])
-    );
-    bg.circle(
-      random(width),
-      random(height * 0.22, height * 0.55),
-      random(8, 44)
-    );
+    bg.fill(random([
+      color(255, 28),
+      color(235, 26),
+      color(210, 22),
+      color(245, 20)
+    ]));
+    bg.circle(random(width), random(height * 0.22, height * 0.55), random(8, 44));
   }
   bg.drawingContext.filter = "none";
 
@@ -136,37 +130,15 @@ function draw() {
     spawnParticle(px, py);
   }
 
+  // chatGpt helped me debug here
   for (let i = particles.length - 1; i >= 0; i--) {
     particles[i].update();
     particles[i].draw();
     if (particles[i].durationEnd) particles.splice(i, 1);
   }
-
-  // Audio Tweaker
-  if (!soundStarted) {
-
-  } else if (frameCount % 4 === 0) {
-    // Tie sound to particles
-    const density = constrain(particleAmount / 15, 0, 1);
-
-    // tweaker 
-    const rainSoundProb = 0.03 + density * 0.10;
-
-    if (random() < rainSoundProb) {
-      const freq = random(450, 1200);
-
-      //Individual rain sound
-      rainSoundFilter.frequency.rampTo(random(700, 1600), 0.02);
-
-      // Loudness
-      const vel = random(0.05, 0.12 + density * 0.12);
-
-      rainSoundSynth.triggerAttackRelease(freq, 0.03, Tone.now(), vel);
-    }
-  }
 }
 
-// chat gpt helped me debug this section
+//chat gpt helped me debug this section
 function spawnParticle(x, y) {
   let mag = Math.hypot(dirX, dirY) || 1;
   let dx = dirX / mag;
@@ -176,23 +148,13 @@ function spawnParticle(x, y) {
   let vy = dy * spd;
 
   let duration = int(random(durationMin, durationMax));
-  let individualAirThickness = random(0.985, 0.999);
-  let individualGravity = random(gravityStrength * 0.6, gravityStrength * 1.4);
+  let individualAirThickness = random(0.985, 0.999);                   
+  let individualGravity = random(gravityStrength * 0.6, gravityStrength * 1.4); 
 
-  particles.push(
-    new Particle(
-      x,
-      y,
-      vx,
-      vy,
-      duration,
-      individualAirThickness,
-      individualGravity
-    )
-  );
+  particles.push(new Particle(x, y, vx, vy, duration, individualAirThickness, individualGravity));
 }
 
-// bunch of math
+//bunch of math
 class Particle {
   constructor(x, y, vx, vy, duration, individualAirThickness, individualGravity) {
     this.pos = createVector(x, y);
@@ -223,15 +185,17 @@ class Particle {
     this.pos.add(this.vel);
 
     this.duration--;
-    this.durationEnd = this.duration <= 0;
+    this.durationEnd = (this.duration <= 0);
   }
 
   draw() {
     let alpha = map(this.duration, 0, this.maxduration, 0, 210);
 
+    // draw draw draw
     noStroke();
     strokeWeight(this.size * 0.1);
     fill(180, alpha * 0.6);
+  
 
     let angle = atan2(this.vel.y, this.vel.x);
     let len = this.length;
@@ -243,5 +207,24 @@ class Particle {
     rectMode(CENTER);
     rect(0, 0, len, w);
     pop();
+
+    // ===== update audio from visuals =====
+  if (audioStarted) {
+    const windMag = Math.hypot(dirX, dirY);       // current wind direction strength
+    const density = particles.length / 300;       // rough “how sandy is it”
+
+    // Gain: more wind + more particles = louder
+    const targetGain = constrain(windMag * 0.9 + density * 0.6, 0, 0.8);
+    windGain.gain.rampTo(targetGain, 0.08);
+
+    // Filter: more wind = brighter hiss
+    const targetFreq = 200 + windMag * 2400 + density * 900;
+    windFilter.frequency.rampTo(targetFreq, 0.08);
+
+    // Occasional grit ticks (don’t do it every frame)
+    if (random() < constrain(density * 0.03, 0, 0.08)) {
+      grit.triggerAttackRelease("16n");
+    }
   }
+}
 }
