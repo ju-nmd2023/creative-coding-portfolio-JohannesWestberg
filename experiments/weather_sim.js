@@ -135,7 +135,7 @@ function draw() {
     if (particles[i].durationEnd) particles.splice(i, 1);
 
 
-    // tie audio to visuals, chatGPT helped me with the frameCount lag reduction tecnique.
+    // tie audio to visuals, chatGPT helped me with the frameCount.
   if (audioStarted && frameCount % 6 === 0) {
     const rainSoundMag = Math.hypot(dirX, dirY);    
     const density = particles.length / 300;       
@@ -229,6 +229,8 @@ class Particle {
     
       const targetFreq = 200 + rainSoundMag * 2400 + density * 900;
       rainSoundFilter.frequency.rampTo(targetFreq, 0.12);
+    }
+    
   }
 }
-}
+
