@@ -219,6 +219,16 @@ class Particle {
     rectMode(CENTER);
     rect(0, 0, len, w);
     pop();
+
+    if (audioStarted && frameCount % 6 === 0) {
+      const rainSoundMag = Math.hypot(dirX, dirY);
+      const density = particles.length / 300;
+    
+      const targetGain = constrain(rainSoundMag * 0.9 + density * 0.6, 0, 0.8);
+      rainSoundGain.gain.rampTo(targetGain, 0.12);
+    
+      const targetFreq = 200 + rainSoundMag * 2400 + density * 900;
+      rainSoundFilter.frequency.rampTo(targetFreq, 0.12);
   }
 }
-
+}
