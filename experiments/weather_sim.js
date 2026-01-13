@@ -17,6 +17,13 @@ let gravityStrength = 0.15;
 
 let bg;
 
+function setup() {
+  createCanvas(innerWidth, innerHeight);
+  dirX = random(-0.25, 0.25);
+  dirY = 0.2;
+  rebuildBackground();
+}
+
 // ton.js overall
 let audioStarted = false;
 let rainSoundNoise, rainSoundFilter, rainSoundGain, rainSoundReverb;
@@ -125,6 +132,20 @@ function draw() {
     particles[i].update();
     particles[i].draw();
     if (particles[i].durationEnd) particles.splice(i, 1);
+
+
+    // tie audio to visuals
+  if (audioStarted) {
+    const rainSoundMag = Math.hypot(dirX, dirY);    
+    const density = particles.length / 300;       
+
+    // More particles = more rai 
+    const targetGain = constrain(rainSoundMag * 0.9 + density * 0.6, 0, 0.8);
+    rainSoundGain.gain.rampTo(targetGain, 0.08);
+
+    const targetFreq = 200 + rainSoundMag * 2400 + density * 900;
+    rainSoundFilter.frequency.rampTo(targetFreq, 0.08);
+    }
   }
 }
 
@@ -197,19 +218,6 @@ class Particle {
     rectMode(CENTER);
     rect(0, 0, len, w);
     pop();
-
-    // tie audio to visuals
-  if (audioStarted) {
-    const rainSoundMag = Math.hypot(dirX, dirY);    
-    const density = particles.length / 300;       
-
-    // More particles = more rai 
-    const targetGain = constrain(rainSoundMag * 0.9 + density * 0.6, 0, 0.8);
-    rainSoundGain.gain.rampTo(targetGain, 0.08);
-
-    const targetFreq = 200 + rainSoundMag * 2400 + density * 900;
-    rainSoundFilter.frequency.rampTo(targetFreq, 0.08);
-    }
   }
 }
 
