@@ -37,8 +37,8 @@ async function startAudio() {
 
   // rainSound bed: pink noise -> lowpass filter -> reverb -> gain -> speakers
   rainSoundNoise = new Tone.Noise("pink");
-  rainSoundFilter = new Tone.Filter({ type: "lowpass", frequency: 300, Q: 0.8 });
-  rainSoundReverb = new Tone.Reverb({ decay: 2, wet: 0.28 });
+  rainSoundFilter = new Tone.Filter({ type: "lowpass", frequency: 300, Q: 0.32 });
+  rainSoundReverb = new Tone.Reverb({ decay: 2, wet: 1 });
   rainSoundGain = new Tone.Gain(0).toDestination();
 
   rainSoundNoise.chain(rainSoundFilter, rainSoundReverb, rainSoundGain);
@@ -135,7 +135,7 @@ function draw() {
   }
 
   // tie audio to visuals, chatGPT helped me with the frameCount
-  if (audioStarted && frameCount % 6 === 0) {
+  if (audioStarted && frameCount % 12 === 0) {
     const rainSoundMag = Math.hypot(dirX, dirY);    
     const density = particles.length / 300;       
 
