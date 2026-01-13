@@ -30,9 +30,10 @@ let rainSoundNoise, rainSoundFilter, rainSoundGain, rainSoundReverb;
 
 //sound also
 async function startAudio() {
+  if (audioStarted) return;
 
   // must click to enable sound
-  await Tone.start(); // :contentReference[oaicite:4]{index=4}
+  await Tone.start();
 
   // rainSound bed: pink noise -> lowpass filter -> reverb -> gain -> speakers
   rainSoundNoise = new Tone.Noise("pink");
@@ -54,8 +55,6 @@ function touchStarted() {
   startAudio();
   return false;
 }
-
-if (audioStarted) return;
 
 //bg = background
 function rebuildBackground() {
@@ -133,20 +132,18 @@ function draw() {
     particles[i].update();
     particles[i].draw();
     if (particles[i].durationEnd) particles.splice(i, 1);
+  }
 
-
-    // tie audio to visuals, chatGPT helped me with the frameCount
+  // tie audio to visuals, chatGPT helped me with the frameCount
   if (audioStarted && frameCount % 6 === 0) {
     const rainSoundMag = Math.hypot(dirX, dirY);    
     const density = particles.length / 300;       
 
-    // More particles = more rai 
     const targetGain = constrain(rainSoundMag * 0.9 + density * 0.6, 0, 0.8);
     rainSoundGain.gain.rampTo(targetGain, 0.08);
 
     const targetFreq = 200 + rainSoundMag * 2400 + density * 900;
     rainSoundFilter.frequency.rampTo(targetFreq, 0.08);
-    }
   }
 }
 
@@ -207,7 +204,6 @@ class Particle {
     noStroke();
     strokeWeight(this.size * 0.1);
     fill(180, alpha * 0.6);
-  
 
     let angle = atan2(this.vel.y, this.vel.x);
     let len = this.length;
@@ -221,4 +217,3 @@ class Particle {
     pop();
   }
 }
-
