@@ -135,7 +135,7 @@ function draw() {
     if (particles[i].durationEnd) particles.splice(i, 1);
 
 
-    // tie audio to visuals, chatGPT helped me with the frameCount.
+    // tie audio to visuals, chatGPT helped me with the frameCount
   if (audioStarted && frameCount % 6 === 0) {
     const rainSoundMag = Math.hypot(dirX, dirY);    
     const density = particles.length / 300;       
@@ -219,7 +219,6 @@ class Particle {
     rectMode(CENTER);
     rect(0, 0, len, w);
     pop();
-    
   }
 }
 
