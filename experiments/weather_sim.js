@@ -30,7 +30,6 @@ let rainSoundNoise, rainSoundFilter, rainSoundGain, rainSoundReverb;
 
 //sound also
 async function startAudio() {
-  if (audioStarted) return;
 
   // must click to enable sound
   await Tone.start(); // :contentReference[oaicite:4]{index=4}
@@ -55,6 +54,8 @@ function touchStarted() {
   startAudio();
   return false;
 }
+
+if (audioStarted) return;
 
 //bg = background
 function rebuildBackground() {
@@ -134,8 +135,8 @@ function draw() {
     if (particles[i].durationEnd) particles.splice(i, 1);
 
 
-    // tie audio to visuals
-  if (audioStarted) {
+    // tie audio to visuals, chatGPT helped me with the frameCount lag reduction tecnique.
+  if (audioStarted && frameCount % 6 === 0) {
     const rainSoundMag = Math.hypot(dirX, dirY);    
     const density = particles.length / 300;       
 
