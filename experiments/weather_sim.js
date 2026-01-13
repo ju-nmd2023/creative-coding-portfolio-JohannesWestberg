@@ -1,6 +1,6 @@
 let particles = [];
 
-let particleAmount = 2;    
+let particleAmount = 5;    
 let speed = 0;             
 let durationMin = 80;
 let durationMax = 900;
@@ -18,12 +18,48 @@ let gravityStrength = 0.15;
 let bg;
 
 function setup() {
-  createCanvas(500, 500);
+  createCanvas(innerWidth, innerHeight);
+  dirX = random(-0.25, 0.25);
+  dirY = 0.2;
   rebuildBackground();
 }
 
+// ton.js overall
+let audioStarted = false;
+let rainSoundNoise, rainSoundFilter, rainSoundGain, rainSoundReverb;
+
+//sound also
+async function startAudio() {
+
+  // must click to enable sound
+  await Tone.start(); // :contentReference[oaicite:4]{index=4}
+
+  // rainSound bed: pink noise -> lowpass filter -> reverb -> gain -> speakers
+  rainSoundNoise = new Tone.Noise("pink");
+  rainSoundFilter = new Tone.Filter({ type: "lowpass", frequency: 600, Q: 0.8 });
+  rainSoundReverb = new Tone.Reverb({ decay: 3, wet: 0.18 });
+  rainSoundGain = new Tone.Gain(0).toDestination();
+
+  rainSoundNoise.chain(rainSoundFilter, rainSoundReverb, rainSoundGain);
+  rainSoundNoise.start();
+
+  audioStarted = true;
+}
+
+function mousePressed() {
+  startAudio();
+}
+
+function touchStarted() {
+  startAudio();
+  return false;
+}
+
+if (audioStarted) return;
+
+//bg = background
 function rebuildBackground() {
-  bg = createGraphics(width, height);
+  bg = createGraphics(innerWidth, innerHeight);
 
   let topCol = color(210);
   let bottomCol = color(10);
@@ -57,7 +93,7 @@ function rebuildBackground() {
       color(210, 22),
       color(245, 20)
     ]));
-    bg.circle(random(width), random(height * 0.22, height * 0.86), random(8, 44));
+    bg.circle(random(width), random(height * 0.22, height * 0.55), random(8, 44));
   }
   bg.drawingContext.filter = "none";
 
@@ -83,11 +119,11 @@ function draw() {
   image(bg, 0, 0);
   noStroke();
   fill(0, 28);
-  rect(0, 0, width, height);
+  rect(0, 0, innerWidth, innerHeight);
 
   // spawn particles as a sheet
   for (let i = 0; i < particleAmount; i++) {
-    let px = random(0, width);
+    let px = random(0, innerWidth);
     let py = random(bandY, bandY + bandHeight);
     spawnParticle(px, py);
   }
@@ -97,6 +133,20 @@ function draw() {
     particles[i].update();
     particles[i].draw();
     if (particles[i].durationEnd) particles.splice(i, 1);
+
+
+    // tie audio to visuals, chatGPT helped me with the frameCount lag reduction tecnique.
+  if (audioStarted && frameCount % 14 === 0) {
+    const rainSoundMag = Math.hypot(dirX, dirY);    
+    const density = particles.length / 300;       
+
+    // More particles = more rai 
+    const targetGain = constrain(rainSoundMag * 0.9 + density * 0.6, 0, 0.8);
+    rainSoundGain.gain.rampTo(targetGain, 0.08);
+
+    const targetFreq = 200 + rainSoundMag * 2400 + density * 900;
+    rainSoundFilter.frequency.rampTo(targetFreq, 0.08);
+    }
   }
 }
 
@@ -116,6 +166,7 @@ function spawnParticle(x, y) {
   particles.push(new Particle(x, y, vx, vy, duration, individualAirThickness, individualGravity));
 }
 
+//bunch of math
 class Particle {
   constructor(x, y, vx, vy, duration, individualAirThickness, individualGravity) {
     this.pos = createVector(x, y);
@@ -124,10 +175,13 @@ class Particle {
     this.duration = duration;
     this.maxduration = duration;
 
-    this.size = random(1, 3);
+    this.size = random(0.2, 1);
 
     this.drag = individualAirThickness;
     this.gravityStrength = individualGravity;
+
+    this.width = random(1.5, 3.5);
+    this.length = random(8, 18);
   }
 
   update() {
@@ -136,7 +190,7 @@ class Particle {
     let dy = dirY / mag;
 
     // Make "rain" be more individual.
-    this.vel.x += dx * 0.0;
+    this.vel.x += dx * this.gravityStrength * 0.35;
     this.vel.y += dy * this.gravityStrength;
 
     this.vel.mult(this.drag);
@@ -150,22 +204,22 @@ class Particle {
     let alpha = map(this.duration, 0, this.maxduration, 0, 210);
 
     // draw draw draw
-    stroke(180, alpha * 0.7);
-    strokeWeight(this.size * 0.7);
+    noStroke();
+    strokeWeight(this.size * 0.1);
+    fill(180, alpha * 0.6);
+  
 
-    // streaking (cannot remove as it breaks it ???)
-    let terminal = this.gravityStrength / max(0.0001, (1 - this.drag));
-    let len = map(this.vel.mag(), 0, terminal, 4, 10, true);
+    let angle = atan2(this.vel.y, this.vel.x);
+    let len = this.length;
+    let w = this.width;
 
-    // same here
-    let v = this.vel.copy();
-    if (v.mag() > 0) v.normalize();
-
-    line(
-      this.pos.x,
-      this.pos.y,
-      this.pos.x - v.x * len,
-      this.pos.y - v.y * len
-    );
+    push();
+    translate(this.pos.x, this.pos.y);
+    rotate(angle);
+    rectMode(CENTER);
+    rect(0, 0, len, w);
+    pop();
+    
   }
 }
+
