@@ -1,15 +1,15 @@
 let particles = [];
 
-let particleAmount = 5;
-let speed = 0;
+let particleAmount = 5;    
+let speed = 0;             
 let durationMin = 80;
 let durationMax = 900;
 
-let bandHeight = 25;
-let bandY = -25;
+let bandHeight = 25;        
+let bandY = -25;            
 
-let dirX = 0;
-let dirY = 0.2;
+let dirX = 0;              
+let dirY = 0.2;              
 
 // gravity and air "thickness"
 let airThickness = 0.9;
@@ -17,30 +17,27 @@ let gravityStrength = 0.15;
 
 let bg;
 
-// Tone.js
-let soundStarted = false;
-let rainSoundSynth, rainSoundFilter, rainSoundGain;
+// ton.js overall
+let audioStarted = false;
+let rainSoundNoise, rainSoundFilter, rainSoundGain, rainSoundReverb;
 
+//sound also
 async function startAudio() {
-  if (soundStarted) return;
+  if (audioStarted) return;
 
-  // Must be triggered by a user gesture (browser autoplay policy)
-  await Tone.start();
+  // must click to enable sound
+  await Tone.start(); // :contentReference[oaicite:4]{index=4}
 
-  rainSoundSynth = new Tone.Noise("pink");
-
-  rainSoundFilter = new Tone.Filter({
-    type: "lowpass",
-    frequency: 600,
-    Q: 0.7,
-  });
-
+  // rainSound bed: pink noise -> lowpass filter -> reverb -> gain -> speakers
+  rainSoundNoise = new Tone.Noise("pink");
+  rainSoundFilter = new Tone.Filter({ type: "lowpass", frequency: 600, Q: 0.8 });
+  rainSoundReverb = new Tone.Reverb({ decay: 3, wet: 0.18 });
   rainSoundGain = new Tone.Gain(0).toDestination();
 
-  rainSoundSynth.chain(rainSoundFilter, rainSoundGain);
-  rainSoundSynth.start();
+  rainSoundNoise.chain(rainSoundFilter, rainSoundReverb, rainSoundGain);
+  rainSoundNoise.start();
 
-  soundStarted = true;
+  audioStarted = true;
 }
 
 function mousePressed() {
@@ -52,14 +49,7 @@ function touchStarted() {
   return false;
 }
 
-function setup() {
-  createCanvas(innerWidth, innerHeight);
-  dirX = random(-0.25, 0.25);
-  dirY = 0.2;
-  rebuildBackground();
-}
-
-// bg = background
+//bg = background
 function rebuildBackground() {
   bg = createGraphics(innerWidth, innerHeight);
 
@@ -75,30 +65,27 @@ function rebuildBackground() {
   bg.noStroke();
   bg.drawingContext.filter = "blur(18px)";
   for (let i = 0; i < 24; i++) {
-    bg.fill(
-      random([color(0, 70), color(20, 60), color(40, 45), color(10, 85)])
-    );
+    bg.fill(random([
+      color(0, 70),
+      color(20, 60),
+      color(40, 45),
+      color(10, 85)
+    ]));
     let w = random(width * 0.14, width * 0.65);
     let h = random(height * 0.08, height * 0.36);
-    bg.rect(
-      random(-width * 0.12, width * 0.92),
-      random(height * 0.14, height * 0.94),
-      w,
-      h
-    );
+    bg.rect(random(-width * 0.12, width * 0.92), random(height * 0.14, height * 0.94), w, h);
   }
   bg.drawingContext.filter = "none";
 
   bg.drawingContext.filter = "blur(10px)";
   for (let i = 0; i < 55; i++) {
-    bg.fill(
-      random([color(255, 28), color(235, 26), color(210, 22), color(245, 20)])
-    );
-    bg.circle(
-      random(width),
-      random(height * 0.22, height * 0.55),
-      random(8, 44)
-    );
+    bg.fill(random([
+      color(255, 28),
+      color(235, 26),
+      color(210, 22),
+      color(245, 20)
+    ]));
+    bg.circle(random(width), random(height * 0.22, height * 0.55), random(8, 44));
   }
   bg.drawingContext.filter = "none";
 
@@ -133,28 +120,15 @@ function draw() {
     spawnParticle(px, py);
   }
 
+  // chatGpt helped me debug here
   for (let i = particles.length - 1; i >= 0; i--) {
     particles[i].update();
     particles[i].draw();
     if (particles[i].durationEnd) particles.splice(i, 1);
   }
-
-  // Audio Tweaker
-  if (!soundStarted) {
-
-  } else if (frameCount % 4 === 0) {
-    const dirMag = Math.hypot(dirX, dirY);
-    const density = constrain(particleAmount / 15, 0, 1);
-
-    const targetGain = constrain(0.02 + dirMag * 0.25 + density * 0.25, 0, 0.7);
-    rainSoundGain.gain.rampTo(targetGain, 0.12);
-
-    const targetFreq = constrain(250 + dirMag * 2200 + density * 1600, 200, 6500);
-    rainSoundFilter.frequency.rampTo(targetFreq, 0.12);
-  }
 }
 
-// chat gpt helped me debug this section
+//chat gpt helped me debug this section
 function spawnParticle(x, y) {
   let mag = Math.hypot(dirX, dirY) || 1;
   let dx = dirX / mag;
@@ -164,23 +138,13 @@ function spawnParticle(x, y) {
   let vy = dy * spd;
 
   let duration = int(random(durationMin, durationMax));
-  let individualAirThickness = random(0.985, 0.999);
-  let individualGravity = random(gravityStrength * 0.6, gravityStrength * 1.4);
+  let individualAirThickness = random(0.985, 0.999);                   
+  let individualGravity = random(gravityStrength * 0.6, gravityStrength * 1.4); 
 
-  particles.push(
-    new Particle(
-      x,
-      y,
-      vx,
-      vy,
-      duration,
-      individualAirThickness,
-      individualGravity
-    )
-  );
+  particles.push(new Particle(x, y, vx, vy, duration, individualAirThickness, individualGravity));
 }
 
-// bunch of math
+//bunch of math
 class Particle {
   constructor(x, y, vx, vy, duration, individualAirThickness, individualGravity) {
     this.pos = createVector(x, y);
@@ -211,15 +175,17 @@ class Particle {
     this.pos.add(this.vel);
 
     this.duration--;
-    this.durationEnd = this.duration <= 0;
+    this.durationEnd = (this.duration <= 0);
   }
 
   draw() {
     let alpha = map(this.duration, 0, this.maxduration, 0, 210);
 
+    // draw draw draw
     noStroke();
     strokeWeight(this.size * 0.1);
     fill(180, alpha * 0.6);
+  
 
     let angle = atan2(this.vel.y, this.vel.x);
     let len = this.length;
@@ -231,5 +197,19 @@ class Particle {
     rectMode(CENTER);
     rect(0, 0, len, w);
     pop();
+
+    // tie audio to visuals
+  if (audioStarted) {
+    const rainSoundMag = Math.hypot(dirX, dirY);    
+    const density = particles.length / 300;       
+
+    // More particles = more rai 
+    const targetGain = constrain(rainSoundMag * 0.9 + density * 0.6, 0, 0.8);
+    rainSoundGain.gain.rampTo(targetGain, 0.08);
+
+    const targetFreq = 200 + rainSoundMag * 2400 + density * 900;
+    rainSoundFilter.frequency.rampTo(targetFreq, 0.08);
+    }
   }
 }
+
