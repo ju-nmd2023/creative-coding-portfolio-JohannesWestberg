@@ -37,8 +37,8 @@ async function startAudio() {
 
   // rainSound bed: pink noise -> lowpass filter -> reverb -> gain -> speakers
   rainSoundNoise = new Tone.Noise("pink");
-  rainSoundFilter = new Tone.Filter({ type: "lowpass", frequency: 600, Q: 0.8 });
-  rainSoundReverb = new Tone.Reverb({ decay: 3, wet: 0.18 });
+  rainSoundFilter = new Tone.Filter({ type: "lowpass", frequency: 300, Q: 0.8 });
+  rainSoundReverb = new Tone.Reverb({ decay: 2, wet: 0.28 });
   rainSoundGain = new Tone.Gain(0).toDestination();
 
   rainSoundNoise.chain(rainSoundFilter, rainSoundReverb, rainSoundGain);
