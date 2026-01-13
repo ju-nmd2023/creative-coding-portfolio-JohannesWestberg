@@ -33,5 +33,10 @@
     "file": "experiments/weather_sim_sand.js",
     "name": "Sandy Day",
     "description": "Inspired by 'Rain' by Ilker Danalov, however I also drew inspiration from the 'Desert Levels' in the popular video game 'New Super Mario Bros Wii'."
+    },
+    {
+        "file": "experiments/weather_sim_sound.js",
+        "name": "Rainy Day - Click to enable sound",
+        "description": "Inspired by 'Rain' by Ilker Danalov, but this time with sound."
     }
 ]
